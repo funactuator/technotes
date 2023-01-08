@@ -3,12 +3,18 @@ const express = require("express");
 const path = require("path");
 const errorHandler = require("./middlewares/errorHandler");
 const app = express();
-const {logger} = require('./middlewares/logger');
+const {logger, logEvents} = require('./middlewares/logger');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const corsOptions = require('./config/corsOptions');
+const connectDB = require('./config/dbConn');
+const mongoose = require('mongoose');
 const PORT = process.env.PORT || 3500;
 const staticPath = path.join(__dirname, 'public');
+
+console.log(process.env.NODE_ENV);
+
+connectDB();
 
 app.use(logger);
 
@@ -37,8 +43,15 @@ app.all('*', (req, res) => {
 
 app.use(errorHandler)
 
-console.log(process.env.NODE_ENV);
+mongoose.connection.once('open',  () => {
+  console.log('Connected to MongoDB');
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  })
+});
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+mongoose.connection.on('error', (error) => {
+  console.log(error);
+  let mongoErrorMessage = `${error.no}: ${error.code}\t${error.sysCall}\t${error.hostname}`
+  logEvents(mongoErrorMessage, 'mongoErrLog.log');
 })
