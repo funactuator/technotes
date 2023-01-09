@@ -38,7 +38,7 @@ const createNote = asyncHandler(async(req, res) => {
   //check if user with userId exists
   const user = await User.findById(userId).lean().exec();
   if(!user){
-    return res.status(400).json({message:`No user found with id ${userId}`});
+    return res.status(400).json({message:`The user you are trying to assign with id ${userId} does not exist.`});
   }
 
   const noteObj = {
@@ -67,6 +67,33 @@ const createNote = asyncHandler(async(req, res) => {
  * @param {*} res express response object
  */
 const updateNote = asyncHandler(async(req, res) => {
+  const {id, title, text, completed, userId} = req.body;
+
+  //confirm data;
+  if(!id || !title || !text || typeof completed !== 'boolean' || !userId){
+    return res.status(400).json({message:'All data required'});
+  }
+
+  //check id and userId sanity
+
+  const note = await Note.findById(id).exec();
+  if(!note){
+    return res.status(400).json({message:`No such note found`});
+  }
+
+  const user = await User.findById(userId).lean().exec();
+
+  if(!user){
+    return res.status(400).json({message:`No user found with id ${userId}`});
+  }
+
+  note.completed = completed;
+  note.title = title;
+  note.text = text;
+  note.userId = user;
+
+  const updatedNote = await note.save();
+  res.json({message:`Note with ${updatedNote.title} updated`});
 
 })
 
@@ -78,6 +105,20 @@ const updateNote = asyncHandler(async(req, res) => {
  * @param {*} res express response object
  */
 const deleteNote = asyncHandler(async(req, res) => {
+  const {id} = req.body;
+  if(!id){
+    return res.status(400).json('Required Note id');
+  }
+  const note = await Note.findById(id).exec();
+
+  if(!note){
+    return res.status(400).json({message:'No note found'});
+  }
+
+  const result = await note.deleteOne();
+
+  const reply = `Note ${result.title} with ticket ${result.ticket} deleted`;
+  res.json({message:reply});
 
 })
 
