@@ -28,6 +28,7 @@ app.use('/', express.static(staticPath));
 
 app.use('/', require('./routes/root'))
 app.use('/users', require('./routes/usersRouter'))
+app.use('/notes', require('./routes/notesRouter'))
 
 app.all('*', (req, res) => {
   res.status(404);
