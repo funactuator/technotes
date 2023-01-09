@@ -29,9 +29,11 @@ const createNote = asyncHandler(async(req, res) => {
   const {title, text, completed, userId} = req.body;
 
   //confirm data 
-  if(!title || !text || typeof completed !== 'boolean' || !userId){
+  if(!title || !text || !userId){
     return res.status(400).json({message:"All fields required!"});
   }
+  let isCompletedPassed = false;
+  if(completed !== undefined || typeof completed === 'boolean')isCompletedPassed = true;
 
   //check if user with userId exists
   const user = await User.findById(userId).lean().exec();
@@ -40,7 +42,11 @@ const createNote = asyncHandler(async(req, res) => {
   }
 
   const noteObj = {
-    title, text, completed, 'user':user
+    title, text, 'user':user, 
+  }
+
+  if(isCompletedPassed){
+    noteObj.completed = completed;
   }
 
   const note = await Note.create(noteObj);
