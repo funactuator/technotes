@@ -95,7 +95,7 @@ const updateUser = asyncHandler(async (req, res) => {
 
   const updatedUser = await user.save();
 
-  res.json({message:`${updatedUser.username}updated`});
+  res.json({message:`${updatedUser.username} updated`});
 
 
 })
@@ -115,14 +115,14 @@ const deleteUser = asyncHandler(async (req, res) => {
     return res.status(400).json({message:'User has assigned notes'});
   }
 
-  const user = await User.findOne(id).exec();
+  const user = await User.findOne({id}).exec();
   if(!user){
     return res.status(400).json({message:'User not found'});
   }
 
   const result = await user.deleteOne();
 
-  const reply = `Username ${result.username} with ID ${result._id}`;
+  const reply = `Username ${result.username} with ID ${result._id} is deleted`;
 
   res.json({message:reply});
 })
