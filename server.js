@@ -3,7 +3,7 @@ const express = require("express");
 const path = require("path");
 const errorHandler = require("./middlewares/errorHandler");
 const app = express();
-const {logger, logEvents} = require('./middlewares/logger');
+const {requestLogger, logEvents} = require('./middlewares/logger');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const corsOptions = require('./config/corsOptions');
@@ -14,22 +14,35 @@ const staticPath = path.join(__dirname, 'public');
 
 console.log(process.env.NODE_ENV);
 
+//connect to the database
 connectDB();
 
-app.use(logger);
+//logs every request, middleware
+app.use(requestLogger);
 
+//custom cors middleware with custom configs.
 app.use(cors(corsOptions));
 
+//json parser middleware, handle are request where content-type is json
 app.use(express.json());
 
+//cookie parser middleware
 app.use(cookieParser());
 
+//exposes static files for public access
 app.use('/', express.static(staticPath));
 
+//root router handler
 app.use('/', require('./routes/root'))
+
+// /users router handler
 app.use('/users', require('./routes/usersRouter'))
+
+// /notes router handler
 app.use('/notes', require('./routes/notesRouter'))
 
+
+//fallback mechanism if req url dosent match with any router(404)
 app.all('*', (req, res) => {
   res.status(404);
   //check headers to send apt response
@@ -43,8 +56,10 @@ app.all('*', (req, res) => {
   }
 })
 
+//middleware for handling all errors encountered on the server
 app.use(errorHandler)
 
+//event listner for mongoose when database is connected and connection gets opened
 mongoose.connection.once('open',  () => {
   console.log('Connected to MongoDB');
   app.listen(PORT, () => {
@@ -52,6 +67,8 @@ mongoose.connection.once('open',  () => {
   })
 });
 
+
+//event listener for mongo connection error
 mongoose.connection.on('error', (error) => {
   console.log(error);
   let mongoErrorMessage = `${error.no}: ${error.code}\t${error.sysCall}\t${error.hostname}`
